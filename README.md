@@ -82,7 +82,7 @@ npm run dev
 ```bash
 cd rag
 uv sync
-un run python main.py
+uv run python main.py
 ```
 
 ### 配置相关
