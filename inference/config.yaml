@@ -1,0 +1,6 @@
+server:
+  port: 8881
+  host: 127.0.0.1
+ocr:
+  device: 1 # 用几个GPU
+  works: 2 # 每个gpu几个进程

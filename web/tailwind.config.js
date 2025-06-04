@@ -1,0 +1,55 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    './index.html',
+    './src/**/*.{js,ts,jsx,tsx,vue}'
+  ],
+  theme: {
+    extend: {}
+  },
+  plugins: [require('daisyui')],
+  safelist: [
+    'h-4',
+    'menu',
+    'menu-sm',
+    'menu-vertical',
+    'lg:menu-horizontal',
+    'bg-base-200',
+    'bg-gray-200',
+    'bg-gray-300',
+    'rounded',
+    'rounded-box',
+    'rounded-t-[0.25rem]',
+    'rounded-b-[0rem]',
+    'bg-base-100',
+    'active',
+    'flex',
+    'justify-center',
+    'items-center',
+    'max-h-[500px]',
+    'h-[500px]',
+    'h-[400px]',
+    'h-[40px]',
+    'h-[30px]',
+    'h-[20px]',
+    'w-[60px]',
+    'w-[140px]',
+    'cursor-pointer',
+    'ml-2',
+    'mr-2',
+    'btn-sm',
+    'dropdown',
+    'min-h-[30px]',
+    'p-1',
+    'bg-base-content',
+    'h-full',
+    'w-full',
+    'select-none',
+    'alert',
+    'alert-success',
+    'alert-error',
+    'alert-warning',
+    'alert-info',
+  ]
+}
+

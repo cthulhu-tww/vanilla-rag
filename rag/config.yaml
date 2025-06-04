@@ -1,0 +1,16 @@
+server:
+  host: "127.0.0.1"
+  port: 8882
+
+milvus:
+  host: "127.0.0.1"
+  port: "19530"
+  user: ""
+  password: ""
+
+interface:
+  inference: "http://127.0.0.1:8881"
+
+mcp:
+  url: "http://127.0.0.1:8880"
+  enable: True

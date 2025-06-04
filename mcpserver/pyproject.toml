@@ -1,0 +1,19 @@
+[project]
+name = "mcpserver"
+version = "0.1.0"
+description = "示例MCP Server"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "requests >=2.32.3,<3.0.0",
+    "matplotlib >=3.10.3,<4.0.0",
+    "mcp >=1.9.1,<2.0.0",
+    "weasyprint >=65.1,<66.0",
+    "markdown >=3.8,<4.0",
+    "pollinations >=4.5.1,<5.0.0",
+    "mysql-connector-python >=9.3.0,<10.0.0"
+]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"

@@ -1,0 +1,61 @@
+@import 'base.css';
+@import "highlight.css";
+@import 'katex/dist/katex.min.css';
+@import 'font-awesome/css/font-awesome.min.css';
+@import "viewerjs/src/css/viewer.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text-color: #f3f3f3;
+    --bg-color: #1a1a1a;
+  }
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400; /* Regular */
+  overflow: hidden;
+}
+
+
+/* Webkit 浏览器：Chrome、Edge、Safari */
+::-webkit-scrollbar {
+  width: 6px; /* 更窄的垂直滚动条 */
+  height: 6px; /* 更窄的水平滚动条 */
+}
+
+::-webkit-scrollbar-track {
+  background-color: #ffffff; /* 白色轨道 */
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #6653e8; /* 主题紫色 */
+  border-radius: 4px; /* 轻微圆角 */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #5243ba; /* 稍微变深一点的紫色 */
+}
+
+.mermaid-error {
+  color: red;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-wrap: normal;
+  overflow: auto;
+  max-width: 100%;
+  font-weight: bold;
+  font-style: italic;
+  border: 1px solid red;
+  border-radius: 0.5rem;
+  background-color: rgba(255, 0, 0, 0.1);
+  box-shadow: 0 0 0.5rem rgba(255, 0, 0, 0.5);
+}
