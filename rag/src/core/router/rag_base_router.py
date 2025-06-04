@@ -22,16 +22,13 @@ async def upload_file(files: List[UploadFile]):
         data = await file.read()
         content_type = file.content_type
         path = await io_util.upload(data=data, filename=filename, folder_name=CHAT_FILE_FOLDER)
+        byte_stream = ByteStream(data=data, mime_type=content_type,
+                                 meta={"file_name": filename})
 
-        content = ''
-        if not content_type.startswith('image'):
-            byte_stream = ByteStream(data=data, mime_type=content_type,
-                                     meta={"file_name": filename})
-
-            r = await rag_base.analysis_pipe().run_async({"file_type_router": {
-                "sources": [byte_stream]}})
-            doc = r['doc_joiner']['documents'][0]
-            content = doc.content
+        r = await rag_base.analysis_pipe().run_async({"file_type_router": {
+            "sources": [byte_stream]}})
+        doc = r['doc_joiner']['documents'][0]
+        content = doc.content
 
         return ChatFilesModel(
             file_name=filename,

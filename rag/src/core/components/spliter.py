@@ -6,13 +6,11 @@ from haystack.components.joiners import DocumentJoiner
 from haystack.components.routers import FileTypeRouter
 from haystack.dataclasses import ByteStream
 from pymilvus import AsyncMilvusClient
+from src.core.components.multimodal2document import Multimodal2Document
 
 from src.core.config import config
 from src.core import text_embedder, rerank_model as rerank
-from src.core.components.pdf_to_document import PdfToDocument
-from src.core.components.ppt_to_document import PptToDocument
 from src.core.components.rag_spliter import RAGSplitter
-from src.core.components.word_to_document import WordToDocument
 from src.core.components.xlsx import XLSXToDocumentUpgrade
 
 
@@ -99,20 +97,23 @@ class Spliter:
                                                 "application/msword",
                                                 "application/vnd.ms-excel",
                                                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                                                "text/csv"
+                                                "text/csv",
+                                                "image/png",
+                                                "image/jpeg",
                                                 ]), name="file_type_router")
 
         pipe.add_component("text_converter", TextFileToDocument())
-        pipe.add_component("pdf_converter", PdfToDocument())
+        pipe.add_component("pdf_converter", Multimodal2Document())
+        pipe.add_component("png_converter", Multimodal2Document())
+        pipe.add_component("jpg_converter", Multimodal2Document())
         pipe.add_component("markdown_converter", MarkdownToDocument())
-        pipe.add_component("ppt_converter", PptToDocument())
-        pipe.add_component("pptx_converter", PptToDocument())
-        pipe.add_component("doc_converter", WordToDocument())
-        pipe.add_component("docx_converter", WordToDocument())
+        pipe.add_component("ppt_converter", Multimodal2Document())
+        pipe.add_component("pptx_converter", Multimodal2Document())
+        pipe.add_component("doc_converter", Multimodal2Document())
+        pipe.add_component("docx_converter", Multimodal2Document())
         pipe.add_component("xls_converter", XLSXToDocumentUpgrade(table_format="markdown"))
         pipe.add_component("xlsx_converter", XLSXToDocumentUpgrade(table_format="markdown"))
         pipe.add_component("csv_converter", CSVToDocument())
-
         pipe.add_component("doc_joiner", DocumentJoiner())
 
         if split_overlap >= split_length:
@@ -125,6 +126,8 @@ class Spliter:
 
         pipe.connect("file_type_router.text/plain", "text_converter.sources")
         pipe.connect("file_type_router.application/pdf", "pdf_converter.sources")
+        pipe.connect("file_type_router.image/png", "png_converter.sources")
+        pipe.connect("file_type_router.image/jpeg", "jpg_converter.sources")
         pipe.connect("file_type_router.text/markdown", "markdown_converter.sources")
         pipe.connect("file_type_router.application/vnd.ms-powerpoint", "ppt_converter.sources")
         pipe.connect("file_type_router.application/vnd.openxmlformats-officedocument.presentationml.presentation",
@@ -141,6 +144,8 @@ class Spliter:
 
         pipe.connect("text_converter", "doc_joiner")
         pipe.connect("pdf_converter", "doc_joiner")
+        pipe.connect("png_converter", "doc_joiner")
+        pipe.connect("jpg_converter", "doc_joiner")
         pipe.connect("markdown_converter", "doc_joiner")
         pipe.connect("ppt_converter", "doc_joiner")
         pipe.connect("pptx_converter", "doc_joiner")

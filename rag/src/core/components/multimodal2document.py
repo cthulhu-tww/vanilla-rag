@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 @component
-class PptToDocument:
+class Multimodal2Document:
 
     @component.output_types(documents=List[Document])
     def run(

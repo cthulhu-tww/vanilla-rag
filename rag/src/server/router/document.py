@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/document", tags=["文档管理"], route_class=LogRoute)
 
-ALLOWED_EXTENSIONS = {"pdf", "txt", "md", "docx", "ppt", "pptx", "xls", "xlsx", "csv", ".jpg", ".jpeg", ".png"}
+ALLOWED_EXTENSIONS = {"pdf", "txt", "md", "docx", "ppt", "pptx", "xls", "xlsx", "csv", "jpg", "jpeg", "png"}
 
 MAX_FILE_SIZE = 20 * 1024 * 1024  # 20 MB
 
