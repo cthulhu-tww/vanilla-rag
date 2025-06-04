@@ -3,7 +3,7 @@
     class="min-h-screen flex flex-col items-center justify-center bg-white px-4 relative overflow-hidden">
     <div class="w-full max-w-sm z-10">
       <div class="text-center mb-8 floating">
-        <h1 id="logo-text" class="text-5xl font-bold mb-2 opacity-0 gradient-text">清湛RAG平台</h1>
+        <h1 id="logo-text" class="text-5xl font-bold mb-2 opacity-0 gradient-text">Vanilla RAG</h1>
         <p id="tagline" class="text-gray-500 opacity-0">智能检索增强平台</p>
       </div>
       <div id="login-card" class="card bg-base-100 shadow-sm border border-gray-100 opacity-0">
@@ -66,7 +66,15 @@
               type="submit"
               class="btn w-full mt-6 bg-[#6653e8] border-[#6653e8] hover:bg-[#5748c7] hover:border-[#5748c7] text-white opacity-0"
             >
-              登录
+              <label class="swap swap-flip" :class="{'swap-active':  loginForm}">
+                <input type="checkbox"/>
+                <div class="swap-on">
+                  登录
+                </div>
+                <div class="swap-off">
+                  注册
+                </div>
+              </label>
             </button>
           </form>
         </div>
