@@ -37,6 +37,13 @@ instance.interceptors.response.use(
         case 400:
           notify.error(error.response.data.msg)
           break
+        case 401:
+          notify.error("登录过期")
+          localStorage.removeItem('token')
+          setTimeout(() => {
+            window.location.reload()
+          }, 1000)
+          break
       }
     }
     return Promise.reject(error)

@@ -2,7 +2,7 @@ import asyncio
 from datetime import datetime, timedelta
 from typing import Optional
 
-from fastapi import Depends
+from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwt
 from passlib.context import CryptContext
@@ -59,9 +59,18 @@ def generate_token(username: str, expires_delta: Optional[timedelta] = None):
 async def check_token(security: HTTPAuthorizationCredentials = Depends(bearer)):
     """检查用户token"""
     token = security.credentials
-    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication token",
+        )
     username: str = payload.get("sub")
     user_exists = await has_user(username)
     if user_exists is None:
-        raise ValueError("用户不存在。")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication token",
+        )
     return user_exists

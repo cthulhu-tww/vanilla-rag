@@ -2,25 +2,33 @@
 
 ## 🌟 Project Background
 
-With continuous improvements in the contextual understanding capabilities and fundamental performance of large language models, best practices for advanced **RAG (Retrieval-Augmented Generation)** techniques are constantly evolving. However, the core mechanisms of **Native-RAG** will largely remain stable over a significant period.
+With continuous improvements in the contextual understanding capabilities and fundamental performance of large language
+models, best practices for advanced **RAG (Retrieval-Augmented Generation)** techniques are constantly evolving.
+However, the core mechanisms of **Native-RAG** will largely remain stable over a significant period.
 
-The goal of this project is to provide a **native**, lightweight, and easy-to-understand implementation of RAG, helping developers quickly get started and master the fundamental principles of RAG technology.
+The goal of this project is to provide a **native**, lightweight, and easy-to-understand implementation of RAG, helping
+developers quickly get started and master the fundamental principles of RAG technology.
 
 ---
 
 ## 💡 Development Motivation
 
-There are already many excellent open-source RAG implementations on the market, but they often come with steep learning curves or complex project structures, which can be unfriendly for AI enthusiasts or small-to-medium-sized teams.
+There are already many excellent open-source RAG implementations on the market, but they often come with steep learning
+curves or complex project structures, which can be unfriendly for AI enthusiasts or small-to-medium-sized teams.
 
-Therefore, we created **Vanilla RAG**: a **minimalist, transparent, and framework-free** RAG system implementation that allows developers to easily get hands-on experience and deeply understand the underlying logic of RAG.
+Therefore, we created **Vanilla RAG**: a **minimalist, transparent, and framework-free** RAG system implementation that
+allows developers to easily get hands-on experience and deeply understand the underlying logic of RAG.
 
 ---
 
 ## 📦 Project Overview
 
-This project is an open-source simplified version of the internal RAG platform at the **Nanjing Tsingzhan Artificial Intelligence Research Institute**, and it embraces the **MCP (Model Context Protocol)**.
+This project is an open-source simplified version of the internal RAG platform at the **Nanjing Tsingzhan Artificial
+Intelligence Research Institute**, and it embraces the **MCP (Model Context Protocol)**.
 
-Consistent with its name, we strive to implement RAG functionality in the most "native" way possible—using only minimal dependencies such as utility functions from [Haystack-ai](https://github.com/deepset-ai/haystack), and **no reliance on any complex AI frameworks**, making it easy to understand and suitable for secondary development.
+Consistent with its name, we strive to implement RAG functionality in the most "native" way possible—using only minimal
+dependencies such as utility functions from [Haystack-ai](https://github.com/deepset-ai/haystack), and **no reliance on
+any complex AI frameworks**, making it easy to understand and suitable for secondary development.
 
 ---
 
@@ -82,10 +90,13 @@ uv sync
 uv run python main.py
 ```
 
+Then visit http://localhost:8883
+
 ### Configuration Details
 
 - `rag/config.yaml`: Configure Milvus server address, MCP service address, and model service addresses.
-- `inference/config.yaml`: Configure OCR concurrency settings; for more details, see [surya-ocr](https://github.com/VikParuchuri/surya).
+- `inference/config.yaml`: Configure OCR concurrency settings; for more details,
+  see [surya-ocr](https://github.com/VikParuchuri/surya).
 
 > Other modules follow the same pattern—simply switch directories and execute the same commands.
 
@@ -93,12 +104,16 @@ uv run python main.py
 
 ## ⚠️ Trademark & Disclaimer
 
-> All logos and brand identifiers used in this project related to the **Nanjing Tsingzhan Artificial Intelligence Research Institute** are trademark assets of their respective legal holders.  
-> Use of these identifiers for derivative projects' promotion, packaging, or branding is prohibited without written permission.  
+> All logos and brand identifiers used in this project related to the **Nanjing Tsingzhan Artificial Intelligence
+Research Institute** are trademark assets of their respective legal holders.  
+> Use of these identifiers for derivative projects' promotion, packaging, or branding is prohibited without written
+> permission.  
 > This project adopts the GPLv3.0 open-source license, which does not grant any rights to trademarks.
 
-> The content and technical implementations within this project are provided solely for educational and communication purposes. They do not represent official positions or endorsements.  
-> If you have any questions or collaboration intentions regarding this project, please contact us via the following link: [Nanjing Tsingzhan Artificial Intelligence Research Institute](https://tsingzhan.com/).
+> The content and technical implementations within this project are provided solely for educational and communication
+> purposes. They do not represent official positions or endorsements.  
+> If you have any questions or collaboration intentions regarding this project, please contact us via the following
+> link: [Nanjing Tsingzhan Artificial Intelligence Research Institute](https://tsingzhan.com/).
 
 ## Demo
 

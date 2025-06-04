@@ -1,5 +1,4 @@
 import asyncio
-import os
 
 import uvicorn
 from fastapi import FastAPI
@@ -8,12 +7,15 @@ from tortoise import Tortoise
 
 from src.core.config import config
 from src.core.milvus_manage import init_stores
+from src.core.router.rag_base_router import router as rag_router
 from src.core.util.mcp_util import MCPManager
 from src.server.core.exceptions import exception_handlers
 from src.server.core.middleware import middlewares
-from src.server.core.utils import load_routers
+from src.server.router.auth import router as auth_router
+from src.server.router.chat import router as chat_router
+from src.server.router.document import router as document_router
+from src.server.router.knowledge import router as knowledge_router
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
 app = FastAPI(
     title="rag",
     version="0.1.0",
@@ -25,13 +27,11 @@ milvus_client = MilvusClient(
     uri=f"http://{config.milvus['host']}:{config.milvus['port']}"
 )
 
-# 动态构建 package_path 中的路径
-package_paths = [
-    os.path.join(current_dir, "src", "server", "router"),
-    os.path.join(current_dir, "src", "core", "router")
-]
-
-load_routers(app=app, package_path=package_paths)
+app.include_router(auth_router)
+app.include_router(knowledge_router)
+app.include_router(chat_router)
+app.include_router(document_router)
+app.include_router(rag_router)
 
 
 @app.on_event("startup")

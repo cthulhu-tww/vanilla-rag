@@ -85,6 +85,8 @@ uv sync
 uv run python main.py
 ```
 
+然后访问 http://localhost:8883
+
 ### 配置相关
 
 rag/config.yaml 可以配置Milvus服务器地址以及MCP和模型服务地址
