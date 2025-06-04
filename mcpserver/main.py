@@ -1,6 +1,7 @@
 import base64
 import datetime
 import os
+import platform
 import random
 import subprocess
 import uuid
@@ -17,6 +18,12 @@ mcp = FastMCP("Tsingzhan-mcp", stateless_http=True, json_response=True, host="12
 
 # server.py
 from decimal import Decimal, getcontext, InvalidOperation
+
+IS_WINDOWS = platform.system() == "Windows"
+
+if not IS_WINDOWS:
+    # 如果不是 Windows，导入 weasyprint 模块（只在 Linux/macOS 下）
+    from weasyprint import HTML
 
 
 @mcp.tool()
@@ -128,21 +135,41 @@ def markdown_to_pdf(content: str, filename: str) -> dict:
         </html>
         """
 
-    # 创建临时 HTML 文件
-    with NamedTemporaryFile(mode='w', suffix='.html', delete=False, encoding='utf-8') as tmp_html:
-        tmp_html.write(html_content)
-        tmp_html_path = tmp_html.name
+    if IS_WINDOWS:
+        # Windows：使用 weasyprint.exe 命令行方式
+        with NamedTemporaryFile(mode='w', suffix='.html', delete=False, encoding='utf-8') as tmp_html:
+            tmp_html.write(html_content)
+            tmp_html_path = tmp_html.name
 
-    output_pdf = uuid.uuid4().hex + ".pdf"
+        output_pdf = uuid.uuid4().hex + ".pdf"
 
-    try:
-        weasyprint_exe = "weasyprint.exe"  # 或者根据平台调整
-        subprocess.run([weasyprint_exe, tmp_html_path, output_pdf], check=True)
+        try:
+            weasyprint_exe = "weasyprint.exe"
+            subprocess.run([weasyprint_exe, tmp_html_path, output_pdf], check=True)
 
-        with open(output_pdf, "rb") as f:
-            file_data = f.read()
+            with open(output_pdf, "rb") as f:
+                file_data = f.read()
 
-        base64_file_data = base64.b64encode(file_data).decode("utf-8")
+            base64_file_data = base64.b64encode(file_data).decode("utf-8")
+
+            return {
+                "type": "file",
+                "filename": f"{filename}.pdf",
+                "mimetype": "application/pdf",
+                "data": base64_file_data
+            }
+
+        finally:
+            for path in [tmp_html_path, output_pdf]:
+                if os.path.exists(path):
+                    os.unlink(path)
+
+    else:
+        # Linux 或 macOS：使用 weasyprint Python 库直接生成 PDF
+        html = HTML(string=html_content)
+        pdf_bytes = html.write_pdf()
+
+        base64_file_data = base64.b64encode(pdf_bytes).decode("utf-8")
 
         return {
             "type": "file",
@@ -150,13 +177,6 @@ def markdown_to_pdf(content: str, filename: str) -> dict:
             "mimetype": "application/pdf",
             "data": base64_file_data
         }
-
-    finally:
-        # 确保清理所有临时文件
-        for path in [tmp_html_path, output_pdf]:
-            if os.path.exists(path):
-                os.unlink(path)
-
 
 @mcp.tool()
 def text_2_image(prompt: str, image_name: str, width: int = 1024, height: int = 1024, seed: int = None) -> dict:
