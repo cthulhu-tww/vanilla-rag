@@ -63,7 +63,7 @@
 ### 环境准备
 
 - Python 3.11+
-- `uv`（Python 包管理器）
+- [`uv`](https://github.com/astral-sh/uv)（Python 包管理器）
 - Node.js（用于前端）
 - milvus 2.5.x
 

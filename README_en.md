@@ -68,7 +68,7 @@ any complex AI frameworks**, making it easy to understand and suitable for secon
 ### Prerequisites
 
 - Python 3.11+
-- `uv` (Python package manager)
+- [`uv`](https://github.com/astral-sh/uv) (Python package manager)
 - Node.js (for frontend)
 - Milvus 2.5.x
 
