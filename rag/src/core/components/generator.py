@@ -218,25 +218,6 @@ class OpenAIClient(AbstractClient):
             print(e)
             yield create_response_from_str(str(e))
 
-    def _openai_response_convert_ollama(self, chunk: ChatCompletion):
-        return {
-            "model": chunk.model,
-            "created_at": chunk.created,
-            "message": chunk.choices[0].message.__dict__,
-            "done": chunk.choices[0].finish_reason is not None,
-        }
-
-    def _openai_response_convert_ollama_stream(self, chunk: ChatCompletionChunk):
-        return {
-            "model": chunk.model,
-            "created_at": chunk.created,
-            "message": {
-                "role": chunk.choices[0].delta.role or "",
-                "content": chunk.choices[0].delta.content
-            },
-            "done": chunk.choices[0].finish_reason is not None,
-        }
-
 
 class Generator:
 
@@ -298,7 +279,7 @@ class Generator:
     async def generate_stream(self, messages, model=None, documents=None, request: Request = None):
         if model is None:
             yield create_response_from_str("模型参数错误，请联系管理员")
-            raise ValueError("model is None")
+            return
 
         if messages[0]['role'] == 'system':
             messages[0]['content'] = self.system_prompt
@@ -315,10 +296,11 @@ class Generator:
 
             if chunk.choices[0].finish_reason is not None:
                 yield create_response_from_chunk(chunk, reference=documents if documents else None,
+                                                 step_content=False,
                                                  files=self.client.files)
                 continue
 
-            yield create_response_from_chunk(chunk)
+            yield create_response_from_chunk(chunk, step_content=False)
 
 
 def create_response_from_str(string: str, step_content=True, done=False, files: list[dict] = None):
@@ -337,7 +319,7 @@ def create_response_from_str(string: str, step_content=True, done=False, files: 
     ) + "\n"
 
 
-def create_response_from_chunk(chunk: ChatCompletion | ChatCompletionChunk, step_content=False, reference=None,
+def create_response_from_chunk(chunk: ChatCompletion | ChatCompletionChunk, step_content=True, reference=None,
                                files: list[dict] = None):
     """
     role="assistant", string: str = None, think: str = None, step_content=True, done=False,

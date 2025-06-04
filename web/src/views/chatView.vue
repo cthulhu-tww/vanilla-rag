@@ -1046,7 +1046,6 @@ const processStream = async (response) => {
       }
     }
   }
-  assistant.stepcontent = null
 
   // 清除wheel
   window.removeEventListener('wheel', handleWheel)
