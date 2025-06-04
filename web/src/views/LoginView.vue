@@ -66,7 +66,15 @@
               type="submit"
               class="btn w-full mt-6 bg-[#6653e8] border-[#6653e8] hover:bg-[#5748c7] hover:border-[#5748c7] text-white opacity-0"
             >
-              登录
+              <label class="swap swap-flip" :class="{'swap-active':  loginForm}">
+                <input type="checkbox"/>
+                <div class="swap-on">
+                  登录
+                </div>
+                <div class="swap-off">
+                  注册
+                </div>
+              </label>
             </button>
           </form>
         </div>
