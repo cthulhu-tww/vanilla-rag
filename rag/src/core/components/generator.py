@@ -1,7 +1,6 @@
 import json
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from typing import Optional
 
 from fastapi import Request
 from openai import AsyncClient
@@ -16,6 +15,7 @@ class AbstractClient(ABC):
     def __init__(self):
         self.tool_list = []
         self.files = []
+        self.system_prompt = ""
 
     @abstractmethod
     async def generate(self, messages, model=None, options=None):
@@ -35,6 +35,15 @@ class AbstractClient(ABC):
 
 
 class OpenAIClient(AbstractClient):
+
+    def __init__(self, api_key, base_url, mcp_manager: MCPManager, system_prompt: str = ""):
+        super().__init__()
+        if api_key is None or api_key == "":
+            api_key = "..."
+        self.client = AsyncClient(api_key=api_key, base_url=base_url)
+        self.mcp_manager = mcp_manager
+
+        self.system_prompt = system_prompt
 
     async def process_tools(self, chunk):
         tools_calls = []
@@ -87,14 +96,11 @@ class OpenAIClient(AbstractClient):
 
         return results
 
-    def __init__(self, api_key, base_url, mcp_manager: MCPManager):
-        super().__init__()
-        if api_key is None or api_key == "":
-            api_key = "..."
-        self.client = AsyncClient(api_key=api_key, base_url=base_url)
-        self.mcp_manager = mcp_manager
-
     async def generate(self, messages, model=None, options=None):
+        if messages[0]['role'] == 'system':
+            messages[0]['content'] = self.system_prompt
+        else:
+            messages.insert(0, {'role': 'system', 'content': self.system_prompt})
         _messages = deepcopy(messages)
 
         while True:
@@ -104,7 +110,7 @@ class OpenAIClient(AbstractClient):
                 extra_body={"enable_thinking": False},
                 model=model,
                 tools=self.mcp_manager.get_tools(),
-                **options
+                **options if options else {}
             )
 
             content = r.choices[0].message.content
@@ -137,7 +143,37 @@ class OpenAIClient(AbstractClient):
             return r
 
     async def generate_stream(self, messages, model=None, options=None, request: Request = None):
+        if messages[0]['role'] == 'system':
+            messages[0]['content'] = self.system_prompt
+        else:
+            messages.insert(0, {'role': 'system', 'content': self.system_prompt})
         _messages = deepcopy(messages)
+
+        r = await self.generate(messages=[
+            {
+                "role": "user",
+                "content": f"""{[f"{m['role']}:{m['content']}" for m in messages]}
+                       请判断上述需求，是否需要调用工具，如果需要请返回：[[yes]]，如果不需要请返回：[[no]]
+                       """
+            }
+        ], model=model)
+        user_tools = False
+        if "[[yes]]" in r.choices[0].message.content:
+            user_tools = True
+            _messages[-1]["content"] = f"""
+                             用户需求：
+                             {_messages[-1]["content"]}
+                             #你必须按照以下步骤思考：
+                             1. 分析问题本质
+                             2. 检查可用工具及其适用场景
+                             3. 评估各工具的优势劣势
+                             4. 选择最匹配的工具
+                             5. 验证选择的合理性
+                             6. 考虑工具的关联，是否有工具为前置工具
+                             7. 确定工具执行顺序
+                             8. 如果达不到预期，你需要进行反思，考虑可能解决的方案。
+                             """
+
         try:
             while True:
                 self.tool_list = []
@@ -146,7 +182,7 @@ class OpenAIClient(AbstractClient):
                     model=model,
                     extra_body={"enable_thinking": False},
                     stream=True,
-                    tools=self.mcp_manager.get_tools(),
+                    tools=self.mcp_manager.get_tools() if user_tools else None,
                     parallel_tool_calls=True,
                     **options
                 )
@@ -190,7 +226,7 @@ class OpenAIClient(AbstractClient):
                     assistant_message = assistant_message + delta.content
                     yield chunk
 
-                if len(self.tool_list) == 0:
+                if len(self.tool_list) == 0 or '[[done]]' in assistant_message:
                     break
 
                 yield "正在调用工具"
@@ -215,13 +251,12 @@ class OpenAIClient(AbstractClient):
                 _messages.append({"role": "assistant", "tool_calls": tool_calls})
                 _messages.extend(tools_message)
         except Exception as e:
-            print(e)
-            yield create_response_from_str(str(e))
+            yield e
 
 
 class Generator:
 
-    def _init_clients(self):
+    def _init_clients(self, mcp_manager: MCPManager, system_prompt: str = ""):
         """Initialize client strategy based on client type"""
         strategies = {
             # 'ollama': OllamaClient,
@@ -230,18 +265,8 @@ class Generator:
         strategy_class = strategies.get(self.client_type)
         if not strategy_class:
             raise ValueError(f"Unsupported client type: {self.client_type}")
-        self.client = strategy_class(api_key=self.api_key, base_url=self.base_url, mcp_manager=self.mcp_manager)
-
-    def _init_system_prompt(self, system_prompt: Optional[str]):
-        official_prompt = """
-            请注意，你的回答应当保持官方、中立、严谨，避免使用过于激进或情绪化的语言。
-            在回答问题时，务必基于事实和数据，避免主观臆断。
-            对于不确定的信息，应当明确表示不确定性，并建议用户参考官方渠道获取准确信息。
-            在涉及政策、法规等敏感话题时，应当严格遵守相关政策，避免误导用户。
-            """
-        self.system_prompt = official_prompt
-        if system_prompt:
-            self.system_prompt += f"\n{system_prompt}\n"
+        self.client = strategy_class(api_key=self.api_key, base_url=self.base_url, mcp_manager=mcp_manager,
+                                     system_prompt=system_prompt)
 
     def __init__(self,
                  client_type="openai",
@@ -257,19 +282,26 @@ class Generator:
         self.api_key = api_key
         self.base_url = base_url
         self.options = {} if options is None else options.model_dump()
-        self.mcp_manager = mcp_manager
-        self._init_clients()
-        self._init_system_prompt(system_prompt)
+        preset_prompt = """
+        你是一个安全、中立且负责任的AI助手。在回答用户问题时，请严格遵守以下准则：  
+        1. **禁止讨论政治敏感话题**：包括但不限于国家主权、领土完整、意识形态争议、国内外政治事件等。  
+        2. **避免偏激或煽动性内容**：不发表任何可能引发对立、歧视、仇恨或暴力倾向的言论。  
+        3. **过滤NSFW内容**：不涉及色情、暴力、犯罪指导等违反法律法规或道德规范的内容。  
+        4. **保持客观中立**：对争议性话题（如宗教、种族、性别等）需基于事实陈述，不表达主观倾向。  
+        5. **拒绝非法或有害请求**：如用户提问涉及违法操作（如黑客攻击、制造危险品等），必须明确拒绝并提醒其合法性。  
+
+        若用户问题触及上述限制，你应礼貌回应：  
+        『抱歉，我无法协助完成该请求。请遵守法律法规，并确保内容安全、健康。』  
+        你的首要任务是提供有益、无害且符合社会价值观的帮助。
+        """
+        self._init_clients(mcp_manager, system_prompt=f"""
+        {preset_prompt}
+        {system_prompt}
+        """)
 
     async def generate(self, messages: list[dict], model=None):
         if model is None:
             raise ValueError("model is None")
-
-        if messages[0]['role'] == 'system':
-            messages[0]['content'] = self.system_prompt
-        else:
-            messages.insert(0, {'role': 'system', 'content': self.system_prompt})
-
         r = await self.client.generate(messages=messages, model=model, options=self.options)
         if isinstance(r, str):
             return create_response_from_str(string=r, files=self.client.files)
@@ -280,11 +312,6 @@ class Generator:
         if model is None:
             yield create_response_from_str("模型参数错误，请联系管理员")
             return
-
-        if messages[0]['role'] == 'system':
-            messages[0]['content'] = self.system_prompt
-        else:
-            messages.insert(0, {'role': 'system', 'content': self.system_prompt})
 
         r = self.client.generate_stream(messages=messages, model=model,
                                         options=self.options,
@@ -305,8 +332,6 @@ class Generator:
 
 def create_response_from_str(string: str, step_content=True, done=False, files: list[dict] = None):
     return json.dumps({
-        "model": None,
-        "created_at": None,
         "message": {
             "role": "assistant",
             "content": string
@@ -315,8 +340,7 @@ def create_response_from_str(string: str, step_content=True, done=False, files: 
         "reference": None,
         "step_content": step_content,
         "files": files
-    }
-    ) + "\n"
+    }, ensure_ascii=False) + "\n"
 
 
 def create_response_from_chunk(chunk: ChatCompletion | ChatCompletionChunk, step_content=True, reference=None,
@@ -351,5 +375,4 @@ def create_response_from_chunk(chunk: ChatCompletion | ChatCompletionChunk, step
         "reference": [r.__dict__ for r in reference] if reference else None,
         "step_content": step_content,
         "files": files,
-    }, ensure_ascii=False,
-    ) + "\n"
+    }, ensure_ascii=False) + "\n"

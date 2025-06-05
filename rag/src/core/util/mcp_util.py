@@ -40,9 +40,6 @@ def generate_response_from_text(text: str) -> [TextResponse | FileResponse | Big
 
 
 class MCPManager:
-    tools: list = []
-    url: str = ""
-
     def get_tools(self):
         return None if len(self.tools) == 0 else self.tools
 
@@ -60,22 +57,10 @@ class MCPManager:
                 read_stream,
                 write_stream,
                 _,):
-            # Create a session using the client streams
             async with ClientSession(read_stream, write_stream) as session:
-                # Initialize the connection
                 await session.initialize()
-                # Call a tool
                 response = await session.list_tools()
                 self.tools = self.get_openai_tools_dicts(response.tools)
-
-    @staticmethod
-    def get_openai_tools_dicts(tools):
-        """获取openai api 兼容的工具调用格式"""
-        return [{"type": "function", "function": {
-            "name": tool.name,
-            "description": tool.description,
-            "parameters": tool.inputSchema
-        }} for tool in tools]
 
     async def call_tools(self, tool_name, tool_arguments) -> list[TextResponse | FileResponse | BigTextResponse]:
         async with streamablehttp_client(f"{self.url}/mcp") as (
@@ -94,3 +79,12 @@ class MCPManager:
                         pass
 
                 return r
+
+    @staticmethod
+    def get_openai_tools_dicts(tools):
+        """获取openai api 兼容的工具调用格式"""
+        return [{"type": "function", "function": {
+            "name": tool.name,
+            "description": tool.description,
+            "parameters": tool.inputSchema
+        }} for tool in tools]

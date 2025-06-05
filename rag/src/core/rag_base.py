@@ -25,7 +25,6 @@ async def router(context: List[Message], params: Params, request: Request):
                         base_url=params.llm_config.base_url, options=params.llm_config.options,
                         system_prompt=params.llm_config.system_prompt,
                         mcp_manager=request.app.state.mcp_manager)
-        system_prompt = params.llm_config.system_prompt
         model = params.llm_config.model
         collection_name = params.retriever_config.collection_name
         open_rag = params.retriever_config.open_rag
@@ -50,7 +49,7 @@ async def router(context: List[Message], params: Params, request: Request):
         return
 
     if not open_rag:
-        async for c in chat(context, reference, llm, system_prompt, model, request):
+        async for c in chat(context, reference, llm, model, request):
             yield c
         return
 
@@ -64,12 +63,10 @@ async def router(context: List[Message], params: Params, request: Request):
         yield c
 
 
-async def chat(context: List[Message], reference: list[Reference], llm: Generator, prompt: str, model: str, request):
+async def chat(context: List[Message], reference: list[Reference], llm: Generator, model: str, request):
     """
     不开启RAG 直接问答
     """
-
-    context.insert(0, Message(role="system", content=prompt))
     async for chunk in llm.generate_stream(messages=[await c._dict()
                                                      for c in context], documents=reference, request=request,
                                            model=model):

@@ -11,7 +11,10 @@ dependencies = [
     "weasyprint ==52.5",
     "markdown >=3.8,<4.0",
     "pollinations >=4.5.1,<5.0.0",
-    "mysql-connector-python >=9.3.0,<10.0.0"
+    "openai>=1.84.0",
+    "faker>=37.3.0",
+    "pandas>=2.2.3",
+    "tabulate>=0.9.0",
 ]
 
 [build-system]
