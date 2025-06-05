@@ -51,7 +51,8 @@ any complex AI frameworks**, making it easy to understand and suitable for secon
 
 - Provides the following auxiliary features:
     - PDF rendering.
-    - Text-to-image generation capability using Pollinations-AI.
+    - Text-to-image generation capability using [Pollinations-AI](https://pollinations.ai/).
+    - Text-to-sql
 
 ### `web/` — Lightweight Frontend Interface
 

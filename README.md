@@ -46,7 +46,8 @@
 
 - 提供以下辅助功能：
     - PDF 渲染。
-    - 基于 Pollinations-AI 的文本生成图像（text2image）能力。
+    - 基于 [Pollinations-AI](https://pollinations.ai/) 的文本生成图像（text2image）能力。
+    - Text-to-sql
 
 ### `web/` —— 轻量级前端界面
 
