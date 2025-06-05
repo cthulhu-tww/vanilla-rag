@@ -117,12 +117,13 @@ Research Institute** are trademark assets of their respective legal holders.
 
 ## Demo
 
-![RAG](./assets/RAG.png)  
-![Mermaid Diagram](./assets/mermaid.png)  
-![LaTeX Formula](./assets/laTex.png)  
-![File Chat](./assets/file-chat.png)
-![MCP Text-to-Image](./assets/MCP-text2image.png)  
-![MCP PDF Rendering](./assets/MCP-pdf.png)
+RAG![RAG](./assets/RAG.png)  
+Mermaid Diagram![Mermaid Diagram](./assets/mermaid.png)  
+LaTeX Formula![LaTeX Formula](./assets/laTex.png)  
+File Chat![File Chat](./assets/file-chat.png)
+MCP Text-to-Image![MCP Text-to-Image](./assets/MCP-text2image.png)  
+MCP Multi-Modal![MCP PDF Rendering](./assets/MCP-pdf.png)
+MCP Text2SQL Agent![text2image_agent.png](./assets/text2image_agent.png)
 
 ## Roadmap
 

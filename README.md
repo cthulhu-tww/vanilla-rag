@@ -109,12 +109,13 @@ inference/config.yaml 可以配置OCR并发数，详情可见[surya-ocr](https:/
 
 ## 演示
 
-![RAG](./assets/RAG.png)
-![mermaid 图表](./assets/mermaid.png)
-![数学公式](./assets/laTex.png)
-![文件聊天](./assets/file-chat.png)
-![MCP文生图](./assets/MCP-text2image.png)
-![MCP pdf渲染](./assets/MCP-pdf.png)
+RAG![RAG](./assets/RAG.png)
+Mermaid图表![mermaid 图表](./assets/mermaid.png)
+数学公式![数学公式](./assets/laTex.png)
+文件聊天![文件聊天](./assets/file-chat.png)
+MCP文生图![MCP文生图](./assets/MCP-text2image.png)
+MCP多模态![MCP pdf渲染](./assets/MCP-pdf.png)
+MCP Text2SQL Agent![text2image_agent.png](./assets/text2image_agent.png)
 
 ## 路线图
 
