@@ -4,8 +4,6 @@ from io import BytesIO
 
 
 def text_2_image(prompt: str, image_name: str, width: int = 1024, height: int = 1024, seed: int = None) -> dict:
-    import pollinations
-    from pollinations import ImageModel
     """
     将提示词转换为图片，并返回图片文件。
 
@@ -19,6 +17,8 @@ def text_2_image(prompt: str, image_name: str, width: int = 1024, height: int = 
     返回:
         FileContent: 包含图片数据的 FileContent 对象
     """
+    import pollinations
+    from pollinations import ImageModel
 
     if seed is None:
         seed = random.randint(0, 100000)

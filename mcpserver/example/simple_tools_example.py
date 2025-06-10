@@ -47,7 +47,6 @@ def decimal_calculate(a, b, operator, precision=10):
 
 
 def get_exchange_rate(local_currency: str, foreign_currency: str) -> str:
-    import requests
     """
     获取本地货币(local_currency)对外币(foreign_currency)的实时汇率。
 
@@ -62,6 +61,8 @@ def get_exchange_rate(local_currency: str, foreign_currency: str) -> str:
         ValueError: 如果货币代码无效或无法获取数据
         ConnectionError: 如果请求失败
     """
+    import requests
+
     # 统一转为小写，API 接口要求路径是小写格式
     local = local_currency.lower()
     foreign = foreign_currency.lower()
