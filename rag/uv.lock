@@ -1105,20 +1105,6 @@ wheels = [
 ]
 
 [[package]]
-name = "milvus-haystack"
-version = "0.0.16"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "haystack-ai" },
-    { name = "pymilvus" },
-    { name = "typing-extensions" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/fe/ae/b4fe3ee3fe1bcf34a763666c932c10f2390b222c33bf2eebc18a34376e41/milvus_haystack-0.0.16.tar.gz", hash = "sha256:76aa49eef6d05ca6c137711a3a339ee51c43fad9d271fffc35cd2cd930181272", size = 26298, upload-time = "2025-04-17T11:33:38.579Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/c1/92/9bc51e732ec58818d500d4517453acac8a42745c4cbf23874814f4264802/milvus_haystack-0.0.16-py3-none-any.whl", hash = "sha256:8b671bd73817a3ab1de2fc2ccfa45a29ad9a9e052a1dd6b34bec2445fb7c779c", size = 22400, upload-time = "2025-04-17T11:33:39.819Z" },
-]
-
-[[package]]
 name = "milvus-lite"
 version = "2.4.12"
 source = { registry = "https://pypi.org/simple" }
@@ -1880,7 +1866,6 @@ dependencies = [
     { name = "matplotlib" },
     { name = "mcp" },
     { name = "mdit-plain" },
-    { name = "milvus-haystack" },
     { name = "openai" },
     { name = "openpyxl" },
     { name = "passlib" },
@@ -1921,14 +1906,13 @@ requires-dist = [
     { name = "matplotlib", specifier = ">=3.10.3,<4.0.0" },
     { name = "mcp", specifier = ">=1.9.1,<2.0.0" },
     { name = "mdit-plain", specifier = ">=1.0.1,<2.0.0" },
-    { name = "milvus-haystack", specifier = ">=0.0.16,<0.0.17" },
     { name = "openai", specifier = ">=1.82.0,<2.0.0" },
     { name = "openpyxl", specifier = ">=3.1.5,<4.0.0" },
     { name = "passlib", specifier = ">=1.7.4,<2.0.0" },
     { name = "pillow", specifier = ">=11.2.1,<12.0.0" },
     { name = "ply", specifier = ">=3.11,<4.0" },
     { name = "pyjwt", specifier = ">=2.10.1,<3.0.0" },
-    { name = "pymilvus", specifier = ">=2.5.9,<3.0.0" },
+    { name = "pymilvus", specifier = ">=2.5.10,<3.0.0" },
     { name = "pynvml", specifier = ">=12.0.0,<13.0.0" },
     { name = "pypdf", specifier = ">=5.5.0,<6.0.0" },
     { name = "python-docx", specifier = ">=1.1.2,<2.0.0" },

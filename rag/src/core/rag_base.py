@@ -86,17 +86,16 @@ async def rag_chat(context: List[Message],
 
     new_doc = []
 
-    yield create_response_from_str("重写用户的查询")
+    yield create_response_from_str("重写用户查询")
     retriever = await Retriever(context=context,
                                 async_client=request.app.state.async_milvus_client,
-                                client=request.app.state.milvus_client,
                                 llm=llm,
                                 model=model,
                                 retriever_config=retriever_config
                                 ).warm_up()
     documents = []
 
-    yield create_response_from_str("向量检索")
+    yield create_response_from_str("混合检索")
     for index_name in collection_name:
         vector_documents = await retriever.vector_retrieval(index_name)
         documents.extend(vector_documents)

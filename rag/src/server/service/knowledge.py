@@ -6,6 +6,7 @@ from tortoise.contrib.pydantic import pydantic_model_creator
 from tortoise.exceptions import DoesNotExist
 from tortoise.transactions import in_transaction
 
+from src.core.components.milvus_manager import MilvusManager
 from src.server.entity import KnowledgeModel, KnowledgeDocumentModel
 from src.server.schemas.common import QueryData
 from src.server.schemas.knowledge import KnowledgeIn, KnowledgeOut
@@ -14,19 +15,17 @@ from src.server.schemas.knowledge import KnowledgeIn, KnowledgeOut
 KnowledgeIn_Pydantic = pydantic_model_creator(KnowledgeModel, name="KnowledgeIn", exclude_readonly=True)
 
 
-async def addKnowledge(knowledge: KnowledgeIn, user) -> KnowledgeOut:
-    # 检查是否存在相同名称的知识库
+async def add_knowledge(knowledge: KnowledgeIn, user) -> KnowledgeOut:
     async with in_transaction() as con:
         existing_knowledge = await KnowledgeModel.filter(name=knowledge.name, create_by=user.id).first()
         if existing_knowledge:
             raise ValueError("该知识库名已存在")
-        create_data = knowledge.model_dump(exclude={'id'})  # 不传 id
+        create_data = knowledge.model_dump(exclude={'id'})
         create_data['create_by'] = user.id
         knowledge_obj = await KnowledgeModel.create(**create_data, using_db=con)
-        # 转换为输出模型返回
         return KnowledgeOut(
             **knowledge_obj.__dict__,
-            document_count=0  # 假设初始文档数为 0
+            document_count=0
         )
 
 
@@ -124,19 +123,16 @@ async def updateKnowledge(knowledge_id: int, knowledge_in: KnowledgeIn) -> Knowl
     )
 
 
-async def deleteKnowledge(knowledge_id: int):
+async def delete_knowledge(knowledge_id: int, milvus_manager: MilvusManager):
     async with in_transaction() as connection:
-        # 获取知识库
         knowledge = await KnowledgeModel.get_or_none(id=knowledge_id)
         if knowledge is None:
-            raise DoesNotExist("知识库未找到")
-
-        # 删除知识库文档中间表中的关联信息
+            raise ValueError("知识库未找到")
         await asyncio.gather(
             KnowledgeDocumentModel.filter(k_id=knowledge_id).using_db(connection).delete(),
-            # 删除知识库本身
             KnowledgeModel.filter(id=knowledge_id).using_db(connection).delete(),
         )
+        await milvus_manager.drop_collection(knowledge.index_name)
 
 
 async def get_documents_by_sourceIds(sourceIds: list[str]) -> list[dict]:

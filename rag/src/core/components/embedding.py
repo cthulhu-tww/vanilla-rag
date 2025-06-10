@@ -1,56 +1,28 @@
-from typing import Optional, List
+from copy import deepcopy
+from typing import List
 
 import aiohttp
 from haystack import Document
-from haystack.dataclasses import SparseEmbedding
 
 from src.core.config import config
 
 
 class FlagEmbedding:
 
-    def __init__(
-            self,
-            meta_fields_to_embed: Optional[List[str]] = None,
-            embedding_separator: str = "\n",
-    ):
-
-        self.meta_fields_to_embed = meta_fields_to_embed or []
-        self.embedding_separator = embedding_separator
-
-    async def run_documents(self, documents: List[Document]):
-        """
-        Embed a list of Documents.
-
-        :param documents:
-            Documents to embed.
-
-        :returns:
-            A dictionary with the following keys:
-            - `documents`: Documents with embeddings
-        """
-        if not isinstance(documents, list) or documents and not isinstance(documents[0], Document):
-            raise TypeError(
-                "EmbedderDocument expects a list of Documents as input."
-                "In case you want to embed a list of strings, please use the Embedding."
-            )
-
-        texts_to_embed = []
-        for doc in documents:
-            meta_values_to_embed = [
-                str(doc.meta[key]) for key in self.meta_fields_to_embed if key in doc.meta and doc.meta[key]
-            ]
-            text_to_embed = (
-                self.embedding_separator.join(meta_values_to_embed + [doc.content] or "")
-            )
-            texts_to_embed.append(text_to_embed)
-
-        r = await self.embedding(texts_to_embed)
-        for d, j in zip(documents, r):
-            d.embedding = j['dense']
-            d.sparse_embedding = SparseEmbedding(indices=list(j['sparse'].keys()), values=list(j['sparse'].values()))
-
-        return {"documents": documents}
+    async def embedding_documents(self, documents: List[Document]) -> list[dict]:
+        _docs = []
+        for d in deepcopy(documents):
+            d = d.__dict__
+            if 'meta' in d:
+                for key, value in d['meta'].items():
+                    d[key] = value
+                del d['meta']
+            _docs.append(d)
+        r = await self.embedding([d['content'] for d in _docs])
+        for d, j in zip(_docs, r):
+            d['vector'] = j['dense']
+            d['sparse_vector'] = j['sparse']
+        return _docs
 
     async def run(self, text: list[str]):
         return await self.embedding(text)

@@ -1,11 +1,10 @@
 import asyncio
 
-from haystack.components.writers import DocumentWriter
 from tortoise import Tortoise
 
-from src.core import text_embedder, executor
+from src.core.components.embedding import FlagEmbedding
+from src.core.components.milvus_manager import MilvusManager
 from src.core.components.spliter import Spliter
-from src.core.milvus_manage import get_collection
 from src.core.util import io_util
 from src.server.entity import KnowledgeModel, KnowledgeDocumentModel
 
@@ -47,8 +46,12 @@ class AnalysisTask:
     """
     用于管理解析任务的类
     """
-    # 常规解析任务队列
-    vector_task_queue = asyncio.Queue()
+
+    def __init__(self, milvus_manager: MilvusManager):
+        if milvus_manager is None:
+            raise ValueError("milvus_manager cannot be None")
+        self.milvus_manager = milvus_manager
+        self.vector_task_queue = asyncio.Queue()
 
     async def add_vector_task(self, vector_tasks: [VectorTask]):
         for vector_task in vector_tasks:
@@ -62,9 +65,6 @@ class AnalysisTask:
         collection_name = vector_task.collection_name
 
         try:
-            store = get_collection(collection_name)
-            writer = DocumentWriter(store)
-
             # 查询数据库，如果查不到这个知识库中的这个文档，就代表已经被删除，就不再执行解析任务
             knowledge_doc = await KnowledgeDocumentModel.filter(k_id=k_id, d_id=d_id).get_or_none()
             if knowledge_doc is None:
@@ -90,21 +90,15 @@ class AnalysisTask:
                 return
 
             print("************** start embedding documents **************")
+            embedder = FlagEmbedding()
+            r = await embedder.embedding_documents(docs)
+            count = await self.milvus_manager.insert_data(collection_name=collection_name,
+                                                          data=r)
 
-            r = await text_embedder.run_documents(docs)
-            embedded_documents = r["documents"]
-
-            # 将写入操作也放入线程池中（如果写入操作是阻塞的）
-            count = await asyncio.get_event_loop().run_in_executor(
-                executor,
-                writer.run,
-                embedded_documents
-            )
-
-            print(f"文档数量: {count['documents_written']}")
+            print(f"文档数量: {count['insert_count']}")
 
             await KnowledgeDocumentModel.filter(k_id=k_id, d_id=d_id).update(
-                status_text=f"解析成功", status_code=3, source_id=embedded_documents[0].meta['source_id'])
+                status_text=f"解析成功", status_code=3, source_id=docs[0].meta['source_id'])
 
         except Exception as e:
             print(f"解析任务出错: {e}")
@@ -144,12 +138,8 @@ class AnalysisTask:
     async def run(self):
         print("开启解析任务------------->>>>>>>>>>>>>>>>>>")
         tasks = await self.get_processing_task_status()
-        # for t in tasks:
-        #     # 区分状态，解析中的，需要清空主题和vector向量库
-        #     if t.status_code == 1:
-        #         # todo 清空主题和vector向量库
-        #         pass
-        #     await self.add_vector_task([t])
+        for t in tasks:
+            await self.add_vector_task([t])
         while True:
             # 从队列中取出一条任务（阻塞直到有任务可用）
             vector_task = await self.vector_task_queue.get()
@@ -165,6 +155,3 @@ class AnalysisTask:
                 print(f"解析失败----->{vector_task.file_name}")
             finally:
                 self.vector_task_queue.task_done()  # 标记任务已完成
-
-
-task = AnalysisTask()

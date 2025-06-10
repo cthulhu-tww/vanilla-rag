@@ -6,10 +6,11 @@ from haystack.components.joiners import DocumentJoiner
 from haystack.components.routers import FileTypeRouter
 from haystack.dataclasses import ByteStream
 from pymilvus import AsyncMilvusClient
+
+from src.core.components.embedding import FlagEmbedding
 from src.core.components.multimodal2document import Multimodal2Document
 
 from src.core.config import config
-from src.core import text_embedder, rerank_model as rerank
 from src.core.components.rag_spliter import RAGSplitter
 from src.core.components.xlsx import XLSXToDocumentUpgrade
 
@@ -27,8 +28,7 @@ class Spliter:
             uri=f"http://{config.milvus['host']}:{config.milvus['port']}",
             user="root",
         )
-        self.text_embedder = text_embedder
-        self.rerank = rerank
+        self.text_embedder = FlagEmbedding()
         self.source_id = ""
 
     async def run(self, data: bytes,

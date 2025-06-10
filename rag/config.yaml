@@ -5,6 +5,7 @@ server:
 milvus:
   host: "127.0.0.1"
   port: "19530"
+  db_name: "default"
   user: ""
   password: ""
 
@@ -13,4 +14,4 @@ interface:
 
 mcp:
   url: "http://127.0.0.1:8880"
-  enable: True
+  enable: False

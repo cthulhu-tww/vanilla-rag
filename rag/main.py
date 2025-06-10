@@ -5,8 +5,10 @@ from fastapi import FastAPI
 from pymilvus import AsyncMilvusClient, MilvusClient
 from tortoise import Tortoise
 
+from src.core.components.analysis_task import AnalysisTask
+from server.entity import KnowledgeModel
+from src.core.components.milvus_manager import MilvusManager
 from src.core.config import config
-from src.core.milvus_manage import init_stores
 from src.core.router.rag_base_router import router as rag_router
 from src.core.util.mcp_util import MCPManager
 from src.server.core.exceptions import exception_handlers
@@ -43,19 +45,21 @@ async def startup_event():
         timezone="Asia/Shanghai",
     )
     await Tortoise.generate_schemas()
-    app.state.milvus_client = MilvusClient(
-        uri=f"http://{config.milvus['host']}:{config.milvus['port']}"
-    )
-    app.state.async_milvus_client = AsyncMilvusClient(
-        uri=f"http://{config.milvus['host']}:{config.milvus['port']}"
-    )
-    await init_stores()
-    from src.core.components.analysis_task import task
+
+    collection_names = [col.index_name for col in await KnowledgeModel.all().order_by('-created')]
+    client = AsyncMilvusClient(uri=f"http://{config.milvus['host']}:{config.milvus['port']}",
+                               db_name=config.milvus['db_name'])
+    milvus_manager = MilvusManager(client)
+    await milvus_manager.load_collections(collection_names)
+    task = AnalysisTask(milvus_manager)
     asyncio.create_task(task.run())
     mcp_manager = MCPManager(config.mcp["url"])
     if config.mcp["enable"]:
         asyncio.create_task(mcp_manager.refresh())
     app.state.mcp_manager = mcp_manager
+    app.state.analysis_task = task
+    app.state.async_milvus_client = client
+    app.state.milvus_manager = milvus_manager
 
 
 @app.on_event("shutdown")

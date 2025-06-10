@@ -1,7 +1,6 @@
 import logging
 from typing import List
-
-from fastapi import APIRouter, Query, UploadFile, File, Form, Depends
+from fastapi import APIRouter, Query, UploadFile, File, Form, Depends, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from tortoise.exceptions import DoesNotExist
@@ -148,8 +147,8 @@ async def get_document_settings(data: DocumentSchema.DocumentSetting):
 
 
 @router.post("/analysis_document", summary="分析文档")
-async def analysis_document(document_analysis: DocumentSchema.DocumentAnalysis):
-    await FolderService.analysis_document(document_analysis)
+async def analysis_document(document_analysis: DocumentSchema.DocumentAnalysis, request: Request):
+    await FolderService.analysis_document(document_analysis, request.app.state.analysis_task)
     return JSONResponse(status_code=200, content=jsonable_encoder({
         "code": 200,
         "msg": "请求成功"

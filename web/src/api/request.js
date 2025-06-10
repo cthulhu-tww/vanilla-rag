@@ -44,6 +44,9 @@ instance.interceptors.response.use(
             window.location.reload()
           }, 1000)
           break
+        case 500:
+          notify.error(error.response.data.msg)
+          break
       }
     }
     return Promise.reject(error)

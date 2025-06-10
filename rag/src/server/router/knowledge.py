@@ -2,57 +2,32 @@ import uuid
 from typing import List
 
 from fastapi import APIRouter, Query, Depends, HTTPException, status
+from fastapi import Request
 from tortoise.exceptions import DoesNotExist
 
-from src.core.components.document_store import MilvusDocumentStore
-from src.core.config import config
-from src.core.milvus_manage import document_stores
 from src.server.core.security import check_token
-from src.server.schemas import common as BaseSchema, knowledge as KnowledgeSchema, document as DocumentSchema
-from src.server.service import knowledge as KnowledgeService
+from src.server.schemas import common as BaseSchema, knowledge as KnowledgeSchema
 from src.server.service import document as DocumentService
-from fastapi import Request
+from src.server.service import knowledge as KnowledgeService
 
 router = APIRouter(prefix="/api/knowledge", tags=["知识库管理"])
 
 
 @router.post("/add", summary="创建知识库")
-async def addKnowledge(knowledge: KnowledgeSchema.KnowledgeIn, user=Depends(check_token)):
+async def add_knowledge(knowledge: KnowledgeSchema.KnowledgeIn, request: Request, user=Depends(check_token)):
+    uuid_str = uuid.uuid1().__str__()
+    uuid_str = uuid_str.replace("-", "_")
+    index_name = f"index_{uuid_str}"
     try:
-        uuid_str = uuid.uuid1().__str__()
-        uuid_str = uuid_str.replace("-", "_")
-        index_name = f"index_{uuid_str}"
         knowledge.index_name = index_name
-        knowledge_out = await KnowledgeService.addKnowledge(knowledge, user)
-        store = MilvusDocumentStore(
-            collection_name=index_name,
-            index_params={
-                "metric_type": "COSINE",
-                "index_type": "HNSW",
-                "params": {"M": 8, "efConstruction": 64},
-            },
-            connection_args={
-                "host": config.milvus["host"],
-                "port": config.milvus["port"],
-                "user": config.milvus["user"],
-                "password": config.milvus["password"],
-                "secure": False
-            },
-            sparse_vector_field="sparse_vector",
-            drop_old=False,
-            enable_text_match=True,
-        )
-        document_stores[index_name] = store
+        await request.app.state.milvus_manager.create_collection(index_name)
+        knowledge_out = await KnowledgeService.add_knowledge(knowledge, user)
         return knowledge_out
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
     except Exception as e:
+        await request.app.state.milvus_manager.drop_collection(index_name)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
+            detail=str(e)
         )
 
 
@@ -88,11 +63,11 @@ async def updateKnowledge(knowledge_id: int, knowledge: KnowledgeSchema.Knowledg
 
 
 @router.delete("/delete_knowledge/{knowledge_id}", response_model=None, summary="删除知识库")
-async def deleteKnowledge(knowledge_id: int):
+async def delete_knowledge(knowledge_id: int, request: Request):
     try:
-        await KnowledgeService.deleteKnowledge(knowledge_id)
-    except DoesNotExist:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="知识库未找到")
+        await KnowledgeService.delete_knowledge(knowledge_id, request.app.state.milvus_manager)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     return {"message": "知识库删除成功"}
 
 
@@ -108,7 +83,7 @@ async def get_documents_by_knowledge(knowledge_id: int, offset: int = Query(1, g
 @router.delete("/documents/{knowledge_id}", response_model=None, summary="删除知识库下的文档")
 async def delete_documents_by_knowledge(knowledge_id: int, document_ids: List[int], request: Request):
     await DocumentService.delete_documents_by_knowledge(knowledge_id, document_ids, request)
-    return  {"message": "删除知识库下的文档成功"}
+    return {"message": "删除知识库下的文档成功"}
 
 
 # 保存知识库下的单个或多个文档

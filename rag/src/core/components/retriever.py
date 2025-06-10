@@ -4,49 +4,43 @@ from typing import List
 
 from haystack import Document
 from haystack.components.builders import PromptBuilder
-from pymilvus import WeightedRanker, AnnSearchRequest, AsyncMilvusClient, MilvusClient
+from pymilvus import WeightedRanker, AnnSearchRequest, AsyncMilvusClient
 
-from src.core import text_embedder, rerank_model
+from src.core.components.reranker import Reranker
+from src.core.components.embedding import FlagEmbedding
 from src.core.components.generator import Generator
+from src.core.components.milvus_manager import MilvusManager
 from src.core.entity.entity import Message, RetrieverConfig
 from src.core.util.decorators import retry_on_error
 
 
 class Retriever:
-    """
-    检索器，支持各类检索 vector graph theme 等
-    """
-
-    THEME = "_theme"
-    GRAPH_NODE = "_node"
-    GRAPH_RELATION = "_relation"
-
     def __init__(self, context: List[Message],
                  llm: Generator, model: str,
                  async_client: AsyncMilvusClient,
-                 retriever_config: RetrieverConfig,
-                 client: MilvusClient):
+                 retriever_config: RetrieverConfig):
         self.sub_query_vectors = None
         self.keywords_vector = None
         self.llm = llm
         self.model = model
         if len(context) == 0:
             raise ValueError("context cannot be None")
-        # 用户最后的问题
         self.query = context[len(context) - 1].content
         self.context = context
         self.sub_query = [self.query]
         self.keywords = ''
         self.filenames = []
-        self.client = client
         self.async_client = async_client
         self.retriever_config = retriever_config
         self.ready = False
+        self.embedder = FlagEmbedding()
+        self.reranker = Reranker()
 
     async def warm_up(self):
+        """重写用户查询"""
         await self._rewrite_query()
-        self.keywords_vector = (await text_embedder.run([self.keywords]))[0]
-        self.sub_query_vectors = (await text_embedder.run(self.sub_query))
+        self.keywords_vector = (await self.embedder.run([self.keywords]))[0]
+        self.sub_query_vectors = (await self.embedder.run(self.sub_query))
         self.ready = True
         return self
 
@@ -117,7 +111,7 @@ class Retriever:
 
     @retry_on_error(max_retries=5, delay=2)
     async def vector_retrieval(self, collection_name: str):
-        """常规RAG 检索"""
+        """向量检索"""
         if self.ready is False:
             raise ValueError("请先调用warm_up方法")
 
@@ -152,8 +146,8 @@ class Retriever:
             r = await self._hybrid_retrieval_from_milvus(datas=datas, _filter=_filter,
                                                          collection_name=collection_name)
             docs = self._milvus_obj_to_doc(r)
-            docs = await rerank_model.run(sub_query_vector['text'], docs, self.retriever_config.rerank_top_k,
-                                          self.retriever_config.rerank_similarity_threshold)
+            docs = await self.reranker.run(sub_query_vector['text'], docs, self.retriever_config.rerank_top_k,
+                                           self.retriever_config.rerank_similarity_threshold)
             docs = self._reorder(docs)
             result.extend(docs)
 
@@ -215,7 +209,6 @@ class Retriever:
 
     def _milvus_obj_to_doc(self, r):
         # todo vector 中的 字段属性 需要处理 vector中是 text 而 Document 对象要求是content，可能要将整个haystack 框架替替换成自实现
-
         return [Document.from_dict({
             'id': i['id'],
             'content': i['entity']['text'] if 'text' in i['entity'] else i['entity']['content'],
@@ -224,8 +217,7 @@ class Retriever:
         }) for i in r[0]]
 
     async def filter(self, _filter: str, collection_name: str) -> list[Document]:
-        des = self.client.describe_collection(collection_name)
-        fields_names = [field['name'] for field in des['fields']]
+        fields_names = [field.name for field in MilvusManager.get_field_schema()[0]]
         r = await self.async_client.query(collection_name=collection_name, filter=_filter, output_fields=fields_names)
         return [Document.from_dict({
             'id': i['id'],
@@ -259,8 +251,7 @@ class Retriever:
             weights.append(data['weight'])
 
         reranker = WeightedRanker(*weights)
-        des = self.client.describe_collection(collection_name)
-        fields_names = [field['name'] for field in des['fields']]
+        fields_names = [field.name for field in MilvusManager.get_field_schema()[0]]
         r = await self.async_client.hybrid_search(
             collection_name=collection_name,
             reqs=reqs,

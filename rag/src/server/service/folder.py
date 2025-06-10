@@ -7,6 +7,8 @@ from tortoise.contrib.pydantic import pydantic_model_creator, PydanticModel
 from tortoise.exceptions import DoesNotExist
 from tortoise.transactions import in_transaction
 
+from src.core.components.analysis_task import VectorTask, AnalysisTask
+from src.core.util import io_util
 from src.server.entity import FolderModel, DocumentModel, KnowledgeDocumentModel, KnowledgeModel
 from src.server.schemas import common as BaseSchema
 from src.server.schemas.common import QueryData
@@ -14,8 +16,6 @@ from src.server.schemas.document import FolderIn, FolderOut, FolderWithDocuments
     DocumentAnalysis, \
     SplitSetting, FolderSimple
 from src.server.service.document import Document_Pydantic
-from src.core.components.analysis_task import task, VectorTask
-from src.core.util import io_util
 
 logger = logging.getLogger(__name__)
 
@@ -151,7 +151,7 @@ async def get_document_settings(document_id, knowledge_id):
             raise HTTPException(status_code=500, detail=f"获取文档设置失败: {str(e)}")
 
 
-async def analysis_document(document_analysis: DocumentAnalysis):
+async def analysis_document(document_analysis: DocumentAnalysis, task: AnalysisTask):
     async with in_transaction() as conn:
         knowledge = await KnowledgeModel.filter(id=document_analysis.knowledge_id).using_db(conn).first()
         if not knowledge:
